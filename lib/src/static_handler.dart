@@ -62,6 +62,10 @@ Handler createStaticHandler(String fileSystemPath,
   contentTypeResolver ??= _defaultMimeTypeResolver;
 
   return (Request request) {
+    if (!_isMethodOk(request))
+      return new Response(HttpStatus.METHOD_NOT_ALLOWED,
+          body: 'Method Not Allowed');
+
     var segs = [fileSystemPath]..addAll(request.url.pathSegments);
 
     var fsPath = p.joinAll(segs);
@@ -166,10 +170,17 @@ Handler createFileHandler(String path, {String url, String contentType}) {
   url ??= p.toUri(p.basename(path)).toString();
 
   return (request) {
+    if (!_isMethodOk(request))
+      return new Response(HttpStatus.METHOD_NOT_ALLOWED,
+          body: 'Method Not Allowed');
     if (request.url.path != url) return new Response.notFound('Not Found');
     return _handleFile(request, file, () => contentType);
   };
 }
+
+/// Determines whether the given [request] is using a supported HTTP Method.
+bool _isMethodOk(Request request) =>
+    request.method == "GET" || request.method == "HEAD";
 
 /// Serves the contents of [file] in response to [request].
 ///
