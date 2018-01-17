@@ -60,7 +60,13 @@ class ContentRanges {
           break;
         }
       }
-      return int.parse(bytes.substring(start, index), onError: (_) => -1);
+      return int.parse(bytes.substring(start, index), onError: (input) {
+        if (input.isEmpty) {
+          return -2;
+        } else {
+          return -1;
+        }
+      });
     }
 
     bool acceptDash() {
@@ -91,6 +97,11 @@ class ContentRanges {
         return const ContentRanges.invalid();
       }
       int end = acceptInt();
+
+      if (end == -2) {
+        // No end specified, so use contentLength
+        end = contentLength - 1;
+      }
 
       ByteRange range = new ByteRange(start, end);
 

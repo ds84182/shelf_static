@@ -241,17 +241,6 @@ void main() {
       expect(response.read().toList(), completion(isEmpty));
     });
 
-    test('truncated parameter', () async {
-      var handler = createStaticHandler(d.sandbox);
-
-      var response = await makeRequest(handler, '/root.txt', headers: {
-        HttpHeaders.RANGE: "bytes=0-",
-      });
-      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
-      expect(response.contentLength, 0);
-      expect(response.read().toList(), completion(isEmpty));
-    });
-
     test('bad range', () async {
       var handler = createStaticHandler(d.sandbox);
 
@@ -307,6 +296,17 @@ void main() {
       expect(response.statusCode, HttpStatus.PARTIAL_CONTENT);
       expect(response.contentLength, 4);
       expect(response.readAsString(), completion("root"));
+    });
+
+    test('no end specified', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=3-",
+      });
+      expect(response.statusCode, HttpStatus.PARTIAL_CONTENT);
+      expect(response.contentLength, 5);
+      expect(response.readAsString(), completion("t txt"));
     });
   });
 }
