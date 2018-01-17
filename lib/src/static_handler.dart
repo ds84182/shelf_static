@@ -190,12 +190,14 @@ bool _isMethodOk(Request request) =>
 Future<Response> _handleFile(
     Request request, File file, FutureOr<String> getContentType()) async {
   var stat = file.statSync();
-  var ifModifiedSince = request.ifModifiedSince;
 
-  if (ifModifiedSince != null) {
-    var fileChangeAtSecResolution = toSecondResolution(stat.changed);
-    if (!fileChangeAtSecResolution.isAfter(ifModifiedSince)) {
-      return new Response.notModified();
+  if (request.method == "GET") {
+    var ifModifiedSince = request.ifModifiedSince;
+    if (ifModifiedSince != null) {
+      var fileChangeAtSecResolution = toSecondResolution(stat.changed);
+      if (!fileChangeAtSecResolution.isAfter(ifModifiedSince)) {
+        return new Response.notModified();
+      }
     }
   }
 
@@ -207,5 +209,11 @@ Future<Response> _handleFile(
   var contentType = await getContentType();
   if (contentType != null) headers[HttpHeaders.CONTENT_TYPE] = contentType;
 
-  return new Response.ok(file.openRead(), headers: headers);
+  if (request.method == "HEAD") {
+    // Responding with a null body causes the Content-Length to be overridden
+    // with 0, so we just provide an empty stream instead.
+    return new Response.ok(const Stream<List<int>>.empty(), headers: headers);
+  } else {
+    return new Response.ok(file.openRead(), headers: headers);
+  }
 }

@@ -197,4 +197,13 @@ void main() {
       expect(response.mimeType, "image/webp");
     });
   });
+
+  test('head method has no body', () async {
+    var handler = createStaticHandler(d.sandbox);
+
+    var response = await makeRequest(handler, '/root.txt', method: "HEAD");
+    expect(response.statusCode, HttpStatus.OK);
+    expect(response.contentLength, 8);
+    expect(response.read().toList(), completion(isEmpty));
+  });
 }
