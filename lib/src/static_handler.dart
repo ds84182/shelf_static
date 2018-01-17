@@ -234,6 +234,7 @@ Future<Response> _handleFile(
       // Single range, handle it
       final range = ranges.single;
       headers[HttpHeaders.CONTENT_LENGTH] = range.length.toString();
+      headers[HttpHeaders.CONTENT_RANGE] = "bytes ${range.start}-${range.end}/${stat.size}";
       return new Response(HttpStatus.PARTIAL_CONTENT,
           body: range.openStream(file), headers: headers);
     } else {
