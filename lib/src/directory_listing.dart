@@ -77,7 +77,8 @@ Response listDirectory(String fileSystemPath, String dirPath) {
     controller.add(encoding.encode(string));
   }
 
-  var heading = path.relative(dirPath, from: fileSystemPath);
+  var heading =
+      path.split(path.relative(dirPath, from: fileSystemPath)).join('/');
   if (heading == '.') {
     heading = '/';
   } else {
