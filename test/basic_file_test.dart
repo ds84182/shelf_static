@@ -82,6 +82,13 @@ void main() {
     expect(response.statusCode, HttpStatus.NOT_FOUND);
   });
 
+  test('method not allowed', () async {
+    var handler = createStaticHandler(d.sandbox);
+
+    var response = await makeRequest(handler, '/root.txt', method: "POST");
+    expect(response.statusCode, HttpStatus.METHOD_NOT_ALLOWED);
+  });
+
   test('last modified', () async {
     var handler = createStaticHandler(d.sandbox);
 
