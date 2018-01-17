@@ -206,4 +206,107 @@ void main() {
     expect(response.contentLength, 8);
     expect(response.read().toList(), completion(isEmpty));
   });
+
+  group('invalid range', () {
+    test('bad parameter name', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "kilobytes=3-3",
+      });
+      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+      expect(response.contentLength, 0);
+      expect(response.read().toList(), completion(isEmpty));
+    });
+
+    test('empty parameter', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=",
+      });
+      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+      expect(response.contentLength, 0);
+      expect(response.read().toList(), completion(isEmpty));
+    });
+
+    test('invalid parameter format', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=abc-def",
+      });
+      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+      expect(response.contentLength, 0);
+      expect(response.read().toList(), completion(isEmpty));
+    });
+
+    test('truncated parameter', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=0-",
+      });
+      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+      expect(response.contentLength, 0);
+      expect(response.read().toList(), completion(isEmpty));
+    });
+
+    test('bad range', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=3-2",
+      });
+      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+      expect(response.contentLength, 0);
+      expect(response.read().toList(), completion(isEmpty));
+    });
+
+    test('out of bounds range', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=120-121",
+      });
+      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+      expect(response.contentLength, 0);
+      expect(response.read().toList(), completion(isEmpty));
+    });
+
+    test('bad out of bounds range', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=120-3",
+      });
+      expect(response.statusCode, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+      expect(response.contentLength, 0);
+      expect(response.read().toList(), completion(isEmpty));
+    });
+  });
+
+  group('single part range', () {
+    test('single byte', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=3-3",
+      });
+      expect(response.statusCode, HttpStatus.PARTIAL_CONTENT);
+      expect(response.contentLength, 1);
+      expect(response.readAsString(), completion("t"));
+    });
+
+    test('multiple bytes', () async {
+      var handler = createStaticHandler(d.sandbox);
+
+      var response = await makeRequest(handler, '/root.txt', headers: {
+        HttpHeaders.RANGE: "bytes=0-3",
+      });
+      expect(response.statusCode, HttpStatus.PARTIAL_CONTENT);
+      expect(response.contentLength, 4);
+      expect(response.readAsString(), completion("root"));
+    });
+  });
 }

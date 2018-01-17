@@ -203,7 +203,8 @@ Future<Response> _handleFile(
 
   var headers = {
     HttpHeaders.CONTENT_LENGTH: stat.size.toString(),
-    HttpHeaders.LAST_MODIFIED: formatHttpDate(stat.changed)
+    HttpHeaders.LAST_MODIFIED: formatHttpDate(stat.changed),
+    HttpHeaders.ACCEPT_RANGES: "bytes",
   };
 
   var contentType = await getContentType();
@@ -214,6 +215,30 @@ Future<Response> _handleFile(
     // with 0, so we just provide an empty stream instead.
     return new Response.ok(const Stream<List<int>>.empty(), headers: headers);
   } else {
-    return new Response.ok(file.openRead(), headers: headers);
+    final ranges = new ContentRanges(request, stat.size);
+
+    Response handleInvalidRange() {
+      headers.remove(HttpHeaders.CONTENT_LENGTH);
+      return new Response(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+          headers: headers);
+    }
+
+    if (ranges.isInvalid) {
+      // Invalid content ranges given (couldn't parse, out of bounds, etc.)
+      return handleInvalidRange();
+    }
+
+    if (ranges.isEmpty) {
+      return new Response.ok(file.openRead(), headers: headers);
+    } else if (ranges.length == 1) {
+      // Single range, handle it
+      final range = ranges.single;
+      headers[HttpHeaders.CONTENT_LENGTH] = range.length.toString();
+      return new Response(HttpStatus.PARTIAL_CONTENT,
+          body: range.openStream(file), headers: headers);
+    } else {
+      // Multiple ranges, not yet implemented
+      return handleInvalidRange();
+    }
   }
 }
