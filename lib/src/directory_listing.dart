@@ -71,7 +71,7 @@ const String _trailer = '''  </ul>
 Response listDirectory(String fileSystemPath, String dirPath) {
   StreamController<List<int>> controller = new StreamController<List<int>>();
   Encoding encoding = new Utf8Codec();
-  HtmlEscape sanitizer = const HtmlEscape();
+  const HtmlEscape sanitizer = const HtmlEscape();
 
   void add(String string) {
     controller.add(encoding.encode(string));
@@ -89,7 +89,8 @@ Response listDirectory(String fileSystemPath, String dirPath) {
     String name = path.relative(entity.path, from: dirPath);
     if (entity is Directory) name += '/';
     String sanitizedName = sanitizer.convert(name);
-    add('    <li><a href="$sanitizedName">$sanitizedName</a></li>\n');
+    String href = Uri.encodeComponent(name);
+    add('    <li><a href="$href">$sanitizedName</a></li>\n');
   }, onDone: () {
     add(_trailer);
     controller.close();
